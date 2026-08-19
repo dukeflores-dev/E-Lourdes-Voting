@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Lourdes College E-Voting</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🗳️</div>
+      <div class="sidebar-brand-text">
+        <strong>E-Voting Admin</strong>
+        <span>Lourdes College</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="/admin/dashboard.html" class="nav-item active" id="nav-dashboard">
+        <span class="nav-item-icon">📊</span> Dashboard
+      </a>
+      <div class="nav-section-label">Management</div>
+      <a href="/admin/elections.html" class="nav-item" id="nav-elections">
+        <span class="nav-item-icon">🗓️</span> Elections
+      </a>
+      <a href="/admin/candidates.html" class="nav-item" id="nav-candidates">
+        <span class="nav-item-icon">👤</span> Candidates
+      </a>
+      <a href="/admin/voters.html" class="nav-item" id="nav-voters">
+        <span class="nav-item-icon">🎓</span> Voters
+      </a>
+      <div class="nav-section-label">Reports</div>
+      <a href="/admin/audit.html" class="nav-item" id="nav-audit">
+        <span class="nav-item-icon">📋</span> Audit Log
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card" id="user-card">
+        <div class="user-avatar" id="admin-avatar"></div>
+        <div class="user-info">
+          <strong id="admin-name">—</strong>
+          <span id="admin-id">—</span>
+        </div>
+      </div>
+      <button class="btn btn-outline btn-sm" style="width:100%;margin-top:0.5rem;" id="logout-btn">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-content">
+    <header class="main-header">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-subtitle">Overview of election activity</div>
+      </div>
+      <div id="active-election-indicator"></div>
+    </header>
+
+    <main class="main-body">
+      <!-- Stats -->
+      <div class="stats-grid mb-4" id="stats-grid">
+        <div class="stat-card"><div class="stat-icon stat-icon-accent" style="background:var(--accent-soft);">🎓</div><div><div class="stat-value" id="stat-voters">—</div><div class="stat-label">Total Voters</div></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-gold" style="background:var(--gold-soft);">✅</div><div><div class="stat-value" id="stat-voted">—</div><div class="stat-label">Votes Cast</div></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-info" style="background:rgba(6,182,212,0.15);">🗓️</div><div><div class="stat-value" id="stat-elections">—</div><div class="stat-label">Elections</div></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-success" style="background:var(--success-soft);">👤</div><div><div class="stat-value" id="stat-candidates">—</div><div class="stat-label">Candidates</div></div></div>
+      </div>
+
+      <!-- Active election live results -->
+      <div id="live-results-section" style="display:none;" class="mb-4">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title" id="live-title">Live Results</div>
+              <div style="font-size:0.8125rem;color:var(--text-muted);" id="live-subtitle"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <span class="badge badge-active badge-dot">Live</span>
+              <a href="/admin/elections.html" class="btn btn-outline btn-sm">Manage →</a>
+            </div>
+          </div>
+          <div class="card-body" id="live-chart-body">
+            <div style="height:300px;"><canvas id="live-chart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="grid-2 mb-4">
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚡ Quick Actions</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:0.75rem;">
+            <a href="/admin/elections.html" class="btn btn-primary">🗓️ Manage Elections</a>
+            <a href="/admin/candidates.html" class="btn btn-outline">👤 Add Candidates</a>
+            <a href="/admin/voters.html" class="btn btn-outline">🎓 Manage Voters</a>
+            <a href="/admin/audit.html" class="btn btn-outline">📋 View Audit Log</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">📋 Recent Activity</div></div>
+          <div class="card-body" style="padding:0;">
+            <div id="recent-audit" style="max-height:220px;overflow-y:auto;">
+              <div style="padding:1rem;text-align:center;color:var(--text-muted);font-size:0.875rem;">Loading…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+  let liveChart = null;
+
+  async function init() {
+    const user = await requireAdminAuth();
+    if (!user) return;
+
+    document.getElementById('admin-name').textContent = user.name;
+    document.getElementById('admin-id').textContent = user.student_id;
+    document.getElementById('admin-avatar').textContent = getInitials(user.name);
+    document.getElementById('logout-btn').addEventListener('click', logout);
+
+    await loadStats();
+    await loadAudit();
+    setupSocket();
+  }
+
+  async function loadStats() {
+    try {
+      const stats = await apiGet('/admin/stats');
+      document.getElementById('stat-voters').textContent = stats.totalVoters;
+      document.getElementById('stat-voted').textContent = stats.totalVotes;
+      document.getElementById('stat-elections').textContent = stats.totalElections;
+      document.getElementById('stat-candidates').textContent = stats.totalCandidates;
+
+      if (stats.activeElection) {
+        document.getElementById('active-election-indicator').innerHTML =
+          `<span class="badge badge-active badge-dot">Active: ${stats.activeElection.title}</span>`;
+        await loadLiveResults(stats.activeElection.id);
+      }
+    } catch (err) { showToast('Failed to load stats: ' + err.message, 'error'); }
+  }
+
+  async function loadLiveResults(electionId) {
+    try {
+      const data = await apiGet(`/results/${electionId}`);
+      const { election, positions } = data;
+      if (!positions.length) return;
+
+      const section = document.getElementById('live-results-section');
+      section.style.display = 'block';
+      document.getElementById('live-title').textContent = `Live Results — ${election.title}`;
+      document.getElementById('live-subtitle').textContent =
+        `${data.totalUniqueVoters} of ${data.totalEligibleVoters} voters (${data.turnout}% turnout)`;
+
+      // Flatten all candidates for chart
+      const labels = [], votes = [], colors = [];
+      const palette = ['#6366f1','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899','#14b8a6'];
+      let ci = 0;
+      positions.forEach(pos => {
+        pos.candidates.forEach(c => {
+          labels.push(`${c.name}\n(${pos.title})`);
+          votes.push(c.votes);
+          colors.push(palette[ci % palette.length]);
+          ci++;
+        });
+      });
+
+      if (liveChart) liveChart.destroy();
+      const ctx = document.getElementById('live-chart');
+      liveChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            data: votes,
+            backgroundColor: colors.map(c => c + 'cc'),
+            borderColor: colors,
+            borderWidth: 2, borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', stepSize: 1 }, beginAtZero: true }
+          }
+        }
+      });
+    } catch {}
+  }
+
+  async function loadAudit() {
+    try {
+      const data = await apiGet('/admin/audit?limit=10');
+      const container = document.getElementById('recent-audit');
+      if (!data.logs.length) {
+        container.innerHTML = `<div style="padding:1rem;text-align:center;color:var(--text-muted);font-size:0.875rem;">No activity yet</div>`;
+        return;
+      }
+      container.innerHTML = data.logs.map(log => `
+        <div style="display:flex;align-items:flex-start;gap:0.75rem;padding:0.75rem 1rem;border-bottom:1px solid var(--border);">
+          <span style="font-size:1rem;">${actionIcon(log.action)}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:0.8125rem;font-weight:500;">${log.detail || log.action}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">${log.user_name || 'System'} · ${formatDate(log.created_at)}</div>
+          </div>
+        </div>
+      `).join('');
+    } catch {}
+  }
+
+  function actionIcon(action) {
+    const m = { LOGIN: '🔑', LOGOUT: '🚪', VOTE_CAST: '🗳️', CREATE_ELECTION: '🗓️', ACTIVATE_ELECTION: '▶️', END_ELECTION: '⏹️', CREATE_VOTER: '👤', DELETE_VOTER: '🗑️', SEND_NOTIFICATION: '📧', RESET_PASSWORD: '🔐' };
+    return m[action] || '📋';
+  }
+
+  function setupSocket() {
+    const socket = io();
+    socket.on('results-update', () => { loadStats(); });
+  }
+
+  init();
+</script>
+</body>
+</html>
