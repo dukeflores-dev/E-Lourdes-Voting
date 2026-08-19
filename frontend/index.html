@@ -9,264 +9,19 @@
     content="Official Electronic Voting System for Lourdes College Counseling Department — Secure, transparent, and accessible.">
   <link rel="stylesheet" href="/css/main.css">
   <style>
-    body {
+    body.login-page {
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
       padding: 1rem;
     }
-
-    .login-wrap {
-      width: 100%;
-      max-width: 440px;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Aurora blobs */
-    .aurora {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      overflow: hidden;
-      background: radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
-        radial-gradient(ellipse at 60% 80%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
-        linear-gradient(135deg, #060c1a 0%, #0d1526 60%, #150e30 100%);
-    }
-
-    .aurora-blob {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(60px);
-      animation: blobFloat 20s ease-in-out infinite;
-    }
-
-    .blob-1 {
-      width: 400px;
-      height: 400px;
-      background: rgba(99, 102, 241, 0.12);
-      top: -100px;
-      left: -100px;
-      animation-delay: 0s;
-    }
-
-    .blob-2 {
-      width: 350px;
-      height: 350px;
-      background: rgba(139, 92, 246, 0.10);
-      bottom: -80px;
-      right: -80px;
-      animation-delay: -7s;
-    }
-
-    .blob-3 {
-      width: 250px;
-      height: 250px;
-      background: rgba(6, 182, 212, 0.08);
-      top: 50%;
-      right: 10%;
-      animation-delay: -14s;
-    }
-
-    @keyframes blobFloat {
-
-      0%,
-      100% {
-        transform: translate(0, 0) scale(1);
-      }
-
-      33% {
-        transform: translate(30px, -30px) scale(1.05);
-      }
-
-      66% {
-        transform: translate(-20px, 20px) scale(0.96);
-      }
-    }
-
-    .login-card {
-      background: rgba(13, 21, 38, 0.85);
-      border: 1px solid rgba(99, 102, 241, 0.25);
-      border-radius: 24px;
-      padding: 2.5rem;
-      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 60px rgba(99, 102, 241, 0.1);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-    }
-
-    .logo {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .logo-icon {
-      width: 72px;
-      height: 72px;
-      background: var(--gradient-accent);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      margin: 0 auto 1rem;
-      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
-      animation: iconPulse 3s ease-in-out infinite;
-    }
-
-    @keyframes iconPulse {
-
-      0%,
-      100% {
-        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
-      }
-
-      50% {
-        box-shadow: 0 8px 40px rgba(99, 102, 241, 0.6);
-      }
-    }
-
-    .logo h1 {
-      font-size: 1.375rem;
-      font-weight: 800;
-      margin-bottom: 0.25rem;
-    }
-
-    .logo p {
-      font-size: 0.8125rem;
-      color: var(--text-muted);
-    }
-
-    .form-group {
-      margin-bottom: 1.25rem;
-    }
-
-    .pw-wrap {
-      position: relative;
-    }
-
-    .pw-toggle {
-      position: absolute;
-      right: 0.875rem;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--text-muted);
-      font-size: 1.125rem;
-      transition: color 0.2s;
-    }
-
-    .pw-toggle:hover {
-      color: var(--text-primary);
-    }
-
-    .btn-login {
-      width: 100%;
-      padding: 0.875rem;
-      background: var(--gradient-accent);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: var(--transition);
-      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-    }
-
-    .btn-login:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 28px rgba(99, 102, 241, 0.5);
-      filter: brightness(1.1);
-    }
-
-    .btn-login:active:not(:disabled) {
-      transform: translateY(0);
-    }
-
-    .btn-login:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .error-msg {
-      background: var(--danger-soft);
-      border: 1px solid var(--danger);
-      color: #fca5a5;
-      border-radius: var(--radius-sm);
-      padding: 0.75rem 1rem;
-      font-size: 0.875rem;
-      margin-bottom: 1rem;
-      display: none;
-    }
-
-    .error-msg.show {
-      display: block;
-      animation: shake 0.3s ease;
-    }
-
-    @keyframes shake {
-
-      0%,
-      100% {
-        transform: translateX(0);
-      }
-
-      20%,
-      60% {
-        transform: translateX(-5px);
-      }
-
-      40%,
-      80% {
-        transform: translateX(5px);
-      }
-    }
-
-    .divider-or {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      color: var(--text-muted);
-      font-size: 0.8125rem;
-      margin: 1.25rem 0;
-    }
-
-    .divider-or::before,
-    .divider-or::after {
-      content: '';
-      flex: 1;
-      border-top: 1px solid var(--border);
-    }
-
-    .footer-info {
-      text-align: center;
-      margin-top: 1.5rem;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    .footer-info strong {
-      color: var(--text-secondary);
-    }
-
-    .input-group .form-control {
-      padding-left: 2.75rem;
-    }
   </style>
 </head>
 
-<body>
+<body class="login-page">
   <!-- Aurora background -->
-  <div class="aurora">
+  <div class="aurora-bg">
     <div class="aurora-blob blob-1"></div>
     <div class="aurora-blob blob-2"></div>
     <div class="aurora-blob blob-3"></div>
@@ -274,89 +29,150 @@
 
   <div class="login-wrap">
     <div class="login-card">
+      <!-- Logo Section -->
       <div class="logo">
         <div class="logo-icon">🗳️</div>
         <h1>Lourdes College</h1>
         <p>Counseling Department E-Voting System</p>
       </div>
 
+      <!-- Error Message -->
       <div class="error-msg" id="error-msg"></div>
 
+      <!-- Login Form -->
       <form id="login-form" autocomplete="off">
+        <!-- Student ID Field -->
         <div class="form-group">
           <label class="form-label" for="student_id">Student ID</label>
           <div class="input-group">
             <span class="input-icon">🎓</span>
-            <input type="text" id="student_id" name="student_id" class="form-control"
-              placeholder="Enter your Student ID" autocomplete="username" required>
+            <input 
+              type="text" 
+              id="student_id" 
+              name="student_id" 
+              class="form-control"
+              placeholder="Enter your Student ID" 
+              autocomplete="username" 
+              required>
           </div>
         </div>
 
+        <!-- Password Field -->
         <div class="form-group">
           <label class="form-label" for="password">Password</label>
           <div class="pw-wrap input-group">
             <span class="input-icon">🔒</span>
-            <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password"
-              autocomplete="current-password" required>
-            <button type="button" class="pw-toggle input-group-right" id="pw-toggle"
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              class="form-control" 
+              placeholder="Enter your password"
+              autocomplete="current-password" 
+              required>
+            <button 
+              type="button" 
+              class="pw-toggle input-group-right" 
+              id="pw-toggle"
               aria-label="Toggle password visibility">👁️</button>
           </div>
         </div>
 
+        <!-- Submit Button -->
         <button type="submit" class="btn-login" id="login-btn">
           <span>Sign In</span>
           <span>→</span>
         </button>
       </form>
 
+      <!-- Divider -->
       <div class="divider-or">secure &amp; encrypted</div>
 
+      <!-- Footer Info -->
       <div class="footer-info">
         <p>🔐 Your vote is <strong>anonymous</strong> and <strong>secured</strong></p>
-        <p style="margin-top:0.35rem">For account issues, contact your administrator</p>
+        <p>For account issues, contact your administrator</p>
       </div>
     </div>
   </div>
 
   <script src="/js/api.js"></script>
   <script>
-    // If already logged in, redirect
+    // Redirect if already logged in
     (async () => {
       try {
         const data = await apiGet('/auth/me');
         if (data.user.role === 'admin') window.location.href = '/admin/dashboard.html';
         else window.location.href = '/voter/dashboard.html';
-      } catch { /* not logged in, stay on page */ }
+      } catch {
+        // Not logged in, stay on page
+      }
     })();
 
-    // Password toggle
-    document.getElementById('pw-toggle').addEventListener('click', function () {
-      const pw = document.getElementById('password');
-      if (pw.type === 'password') { pw.type = 'text'; this.textContent = '🙈'; }
-      else { pw.type = 'password'; this.textContent = '👁️'; }
+    // Password visibility toggle
+    const pwToggleBtn = document.getElementById('pw-toggle');
+    const pwInput = document.getElementById('password');
+
+    pwToggleBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (pwInput.type === 'password') {
+        pwInput.type = 'text';
+        this.textContent = '🙈';
+        this.setAttribute('aria-label', 'Hide password');
+      } else {
+        pwInput.type = 'password';
+        this.textContent = '👁️';
+        this.setAttribute('aria-label', 'Show password');
+      }
     });
 
-    // Login form
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
+    // Login form submission
+    const loginForm = document.getElementById('login-form');
+    const loginBtn = document.getElementById('login-btn');
+    const errorMsg = document.getElementById('error-msg');
+
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = document.getElementById('login-btn');
-      const errEl = document.getElementById('error-msg');
+
       const student_id = document.getElementById('student_id').value.trim();
       const password = document.getElementById('password').value;
 
-      btn.disabled = true;
-      btn.innerHTML = '<span>Signing in…</span>';
-      errEl.classList.remove('show');
+      // Clear previous error
+      errorMsg.classList.remove('show', 'shake');
+
+      // Validate inputs
+      if (!student_id || !password) {
+        errorMsg.textContent = 'Please enter both Student ID and Password';
+        errorMsg.classList.add('show', 'shake');
+        return;
+      }
+
+      // Disable button and show loading state
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<span>Signing in…</span>';
 
       try {
         const data = await apiPost('/auth/login', { student_id, password });
-        if (data.user.role === 'admin') window.location.href = '/admin/dashboard.html';
-        else window.location.href = '/voter/dashboard.html';
+        
+        // Redirect based on role
+        if (data.user.role === 'admin') {
+          window.location.href = '/admin/dashboard.html';
+        } else {
+          window.location.href = '/voter/dashboard.html';
+        }
       } catch (err) {
-        errEl.textContent = err.message;
-        errEl.classList.add('show');
-        btn.disabled = false;
-        btn.innerHTML = '<span>Sign In</span><span>→</span>';
+        // Show error message
+        errorMsg.textContent = err.message || 'Login failed. Please try again.';
+        errorMsg.classList.add('show', 'shake');
+
+        // Reset button
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<span>Sign In</span><span>→</span>';
+
+        // Clear password field on error
+        pwInput.value = '';
+        pwInput.type = 'password';
+        pwToggleBtn.textContent = '👁️';
       }
     });
   </script>
