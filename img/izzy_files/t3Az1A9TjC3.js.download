@@ -1,0 +1,6 @@
+;/*FB_PKG_DELIM*/
+
+__d("LSOptimisticUpsertAttachmentReactionV2",[],(function(t,n,r,o,a,i){function e(){var e=arguments,t=e[e.length-1],n=[],r=[];return t.resolve(r)}e.__sproc_name__="LSMailboxOptimisticUpsertAttachmentReactionV2StoredProcedure",e.__tables__=[],a.exports=e}),null);
+__d("MWAiTransparencySource",["$InternalEnum"],(function(t,n,r,o,a,i){"use strict";var e=n("$InternalEnum")({CREATOR_DISCLOSED:"self_disclosed"}),l=e;i.default=l}),66);
+__d("MWAiProductClassifier",["MSGDataclassTypes.flow","MWAiTransparencySource","gkx"],(function(t,n,r,o,a,i,l){"use strict";function e(e){var t;if(e==null)return null;var n;try{var a=JSON.parse(e);n=a==null?void 0:a.ai_metadata}catch(e){return null}return((t=n)==null?void 0:t.ai_product)===o("MSGDataclassTypes.flow").XmsgaiProduct.CreatorDisclosedAi?r("MWAiTransparencySource").CREATOR_DISCLOSED:null}function s(e){return e===r("MWAiTransparencySource").CREATOR_DISCLOSED&&r("gkx")("8172")}l.classify=e,l.shouldShowInlineLabel=s}),98);
+__d("MWV2MessageProfilePhotoMenuQuery_facebookRelayOperation",[],(function(t,n,r,o,a,i){a.exports="9370810589694752"}),null);
