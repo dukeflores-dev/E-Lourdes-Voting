@@ -3,10 +3,10 @@ import './App.css'
 import schoolLogo from '../img/3gDW1HS7_400x400.png'
 
 const candidates = [
-  { id: 1, name: 'Mikaela Santos', course: 'BS Nursing · 3rd year', role: 'President', initials: 'MS', color: 'coral', statement: 'A more connected Lourdes, led with empathy and action.' },
-  { id: 2, name: 'Joshua Lim', course: 'BS Information Tech · 2nd year', role: 'President', initials: 'JL', color: 'blue', statement: 'Bringing student ideas from the group chat to the council table.' },
-  { id: 3, name: 'Amara Reyes', course: 'BA Communication · 4th year', role: 'Vice President', initials: 'AR', color: 'lilac', statement: 'Making every student voice visible in our campus community.' },
-  { id: 4, name: 'Theo Garcia', course: 'BS Accountancy · 3rd year', role: 'Vice President', initials: 'TG', color: 'yellow', statement: 'Practical leadership for a more active student life.' },
+  { id: 1, name: 'Alissa Mae Tiozon', course: 'BS IT · 3rd year', role: 'President', initials: 'AM', color: 'coral', statement: 'A more connected Lourdes, led with empathy and action.' },
+  { id: 2, name: 'Bryan Hernandez', course: 'BS IT · 3rd year', role: 'President', initials: 'BH', color: 'blue', statement: 'Bringing student ideas from the group chat to the council table.' },
+  { id: 3, name: 'Duke Flores', course: 'BS BA · 3rd year', role: 'Vice President', initials: 'DF', color: 'lilac', statement: 'Making every student voice visible in our campus community.' },
+  { id: 4, name: 'Izzy Deymos', course: 'BS HM · 3rd year', role: 'Vice President', initials: 'ID', color: 'yellow', statement: 'Practical leadership for a more active student life.' },
 ]
 
 function App() {
