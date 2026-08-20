@@ -1,4 +1,24 @@
-# React + Vite
+# Our Lady of Lourdes College Elections
+
+## GitHub Pages deployment
+
+This Vite React app must be published through the included GitHub Actions workflow.
+
+1. Push the changes to GitHub:
+
+	```powershell
+	git add .
+	git commit -m "Fix GitHub Pages deployment"
+	git push origin main
+	```
+
+2. Open **Settings > Pages** in the repository.
+3. Set **Source** to **GitHub Actions**.
+4. Wait for **Deploy to GitHub Pages** to finish in the **Actions** tab.
+
+Do not use **Deploy from a branch** with the repository root. The root `index.html` is Vite source HTML; the workflow publishes the production-ready `dist` folder.
+
+For PowerShell development, use `npm.cmd run dev` if `npm` is blocked by execution policy.
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
