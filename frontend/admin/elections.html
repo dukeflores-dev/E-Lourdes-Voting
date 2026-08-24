@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elections — Lourdes College E-Voting Admin</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<div class="bg-animated"></div>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🗳️</div>
+      <div class="sidebar-brand-text"><strong>E-Voting Admin</strong><span>Lourdes College</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="/admin/dashboard.html" class="nav-item"><span class="nav-item-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a href="/admin/elections.html" class="nav-item active"><span class="nav-item-icon">🗓️</span> Elections</a>
+      <a href="/admin/candidates.html" class="nav-item"><span class="nav-item-icon">👤</span> Candidates</a>
+      <a href="/admin/voters.html" class="nav-item"><span class="nav-item-icon">🎓</span> Voters</a>
+      <div class="nav-section-label">Reports</div>
+      <a href="/admin/audit.html" class="nav-item"><span class="nav-item-icon">📋</span> Audit Log</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="admin-avatar"></div>
+        <div class="user-info"><strong id="admin-name">—</strong><span id="admin-id">—</span></div>
+      </div>
+      <button class="btn btn-outline btn-sm" style="width:100%;margin-top:0.5rem;" id="logout-btn">Sign Out</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div><div class="page-title">Elections</div><div class="page-subtitle">Manage elections, positions, and status</div></div>
+      <button class="btn btn-primary" id="new-election-btn">+ New Election</button>
+    </header>
+    <main class="main-body">
+      <div id="elections-list"><div style="text-align:center;padding:3rem;color:var(--text-muted);">Loading…</div></div>
+    </main>
+  </div>
+</div>
+
+<!-- Create/Edit Election Modal -->
+<div class="modal-overlay" id="election-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="election-modal-title">New Election</h3>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal('election-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="election-form">
+        <input type="hidden" id="election-id">
+        <div class="form-group mb-2">
+          <label class="form-label">Election Title *</label>
+          <input type="text" class="form-control" id="election-title" placeholder="e.g. Student Council Election 2024" required>
+        </div>
+        <div class="form-group mb-2">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" id="election-desc" placeholder="Brief description of the election…" rows="3"></textarea>
+        </div>
+        <div class="grid-2 mb-2">
+          <div class="form-group">
+            <label class="form-label">Start Date & Time</label>
+            <input type="datetime-local" class="form-control" id="election-start">
+          </div>
+          <div class="form-group">
+            <label class="form-label">End Date & Time</label>
+            <input type="datetime-local" class="form-control" id="election-end">
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('election-modal')">Cancel</button>
+      <button class="btn btn-primary" id="election-save-btn">Save Election</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manage Positions Modal -->
+<div class="modal-overlay" id="positions-modal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <h3 class="modal-title">📋 Manage Positions</h3>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal('positions-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:1rem;" id="positions-election-name"></div>
+      <div id="positions-list" style="margin-bottom:1.25rem;"></div>
+      <form id="position-form" style="display:flex;gap:0.75rem;align-items:flex-end;">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Add Position</label>
+          <input type="text" class="form-control" id="position-title" placeholder="e.g. President, Secretary…">
+        </div>
+        <button type="submit" class="btn btn-primary" style="flex-shrink:0;">Add</button>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('positions-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+  let elections = [];
+  let activePositionElectionId = null;
+
+  async function init() {
+    const user = await requireAdminAuth();
+    if (!user) return;
+    document.getElementById('admin-name').textContent = user.name;
+    document.getElementById('admin-id').textContent = user.student_id;
+    document.getElementById('admin-avatar').textContent = getInitials(user.name);
+    document.getElementById('logout-btn').addEventListener('click', logout);
+    document.getElementById('new-election-btn').addEventListener('click', () => openElectionModal(null));
+    document.getElementById('election-save-btn').addEventListener('click', saveElection);
+    document.getElementById('position-form').addEventListener('submit', addPosition);
+    await loadElections();
+  }
+
+  async function loadElections() {
+    try {
+      elections = await apiGet('/admin/elections');
+      renderElections();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  function renderElections() {
+    const container = document.getElementById('elections-list');
+    if (!elections.length) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🗓️</div><h3>No Elections Yet</h3><p>Create your first election to get started.</p><button class="btn btn-primary" onclick="openElectionModal(null)">+ Create Election</button></div>`;
+      return;
+    }
+
+    container.innerHTML = elections.map(e => `
+      <div class="card mb-2">
+        <div class="card-body" style="display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.4rem;">
+              <span class="badge badge-${e.status}">${statusLabel(e.status)}</span>
+              <h3 style="font-size:1rem;margin:0;">${e.title}</h3>
+            </div>
+            ${e.description ? `<p style="font-size:0.8125rem;color:var(--text-secondary);margin-bottom:0.35rem;">${e.description}</p>` : ''}
+            <div style="font-size:0.75rem;color:var(--text-muted);">
+              ${e.start_at ? `Start: ${formatDate(e.start_at)}` : 'No start date'}
+              ${e.end_at ? ` · End: ${formatDate(e.end_at)}` : ''}
+            </div>
+          </div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+            <button class="btn btn-outline btn-sm" onclick="openPositionsModal(${e.id}, '${escHtml(e.title)}')">📋 Positions</button>
+            ${e.status === 'draft' ? `<button class="btn btn-success btn-sm" onclick="activateElection(${e.id})">▶️ Activate</button>` : ''}
+            ${e.status === 'active' ? `<button class="btn btn-danger btn-sm" onclick="endElection(${e.id})">⏹️ End</button>` : ''}
+            ${e.status !== 'active' ? `<button class="btn btn-outline btn-sm" onclick="openElectionModal(${e.id})">✏️ Edit</button>` : ''}
+            ${e.status !== 'active' ? `<button class="btn btn-ghost btn-sm" onclick="deleteElection(${e.id})" style="color:var(--danger);">🗑️</button>` : ''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function statusLabel(s) { return { draft: '⚪ Draft', active: '🟢 Active', ended: '🔴 Ended' }[s] || s; }
+  function escHtml(s) { return s.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+  function openElectionModal(id) {
+    const el = elections.find(e => e.id === id);
+    document.getElementById('election-modal-title').textContent = el ? 'Edit Election' : 'New Election';
+    document.getElementById('election-id').value = el ? el.id : '';
+    document.getElementById('election-title').value = el ? el.title : '';
+    document.getElementById('election-desc').value = el ? (el.description || '') : '';
+    document.getElementById('election-start').value = el && el.start_at ? el.start_at.slice(0,16) : '';
+    document.getElementById('election-end').value = el && el.end_at ? el.end_at.slice(0,16) : '';
+    document.getElementById('election-modal').classList.add('open');
+  }
+
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  async function saveElection() {
+    const btn = document.getElementById('election-save-btn');
+    const id = document.getElementById('election-id').value;
+    const body = {
+      title: document.getElementById('election-title').value.trim(),
+      description: document.getElementById('election-desc').value.trim(),
+      start_at: document.getElementById('election-start').value || null,
+      end_at: document.getElementById('election-end').value || null,
+    };
+    if (!body.title) return showToast('Title is required', 'error');
+
+    btn.disabled = true;
+    try {
+      if (id) await apiPut(`/admin/elections/${id}`, body);
+      else await apiPost('/admin/elections', body);
+      showToast(`Election ${id ? 'updated' : 'created'} successfully`, 'success');
+      closeModal('election-modal');
+      await loadElections();
+    } catch (err) { showToast(err.message, 'error'); }
+    btn.disabled = false;
+  }
+
+  async function activateElection(id) {
+    showConfirm('Activate this election? Any currently active election will be ended.', async () => {
+      try {
+        await apiPost(`/admin/elections/${id}/activate`);
+        showToast('Election activated!', 'success');
+        await loadElections();
+      } catch (err) { showToast(err.message, 'error'); }
+    }, 'Activate Election');
+  }
+
+  async function endElection(id) {
+    showConfirm('End this election? No more votes will be accepted.', async () => {
+      try {
+        await apiPost(`/admin/elections/${id}/end`);
+        showToast('Election ended', 'info');
+        await loadElections();
+      } catch (err) { showToast(err.message, 'error'); }
+    }, 'End Election');
+  }
+
+  async function deleteElection(id) {
+    showConfirm('Delete this election and all its data? This cannot be undone.', async () => {
+      try {
+        await apiDelete(`/admin/elections/${id}`);
+        showToast('Election deleted', 'info');
+        await loadElections();
+      } catch (err) { showToast(err.message, 'error'); }
+    }, 'Delete Election');
+  }
+
+  // ─── POSITIONS ─────────────────────────────────────────────────────────────
+  async function openPositionsModal(electionId, electionTitle) {
+    activePositionElectionId = electionId;
+    document.getElementById('positions-election-name').textContent = electionTitle;
+    document.getElementById('position-title').value = '';
+    document.getElementById('positions-modal').classList.add('open');
+    await loadPositions();
+  }
+
+  async function loadPositions() {
+    const container = document.getElementById('positions-list');
+    try {
+      const positions = await apiGet(`/admin/positions?electionId=${activePositionElectionId}`);
+      if (!positions.length) {
+        container.innerHTML = `<p style="color:var(--text-muted);font-size:0.875rem;">No positions added yet.</p>`;
+        return;
+      }
+      container.innerHTML = positions.map(p => `
+        <div style="display:flex;align-items:center;gap:0.75rem;padding:0.625rem 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:1rem;">📌</span>
+          <div style="flex:1;">
+            <div style="font-size:0.9375rem;font-weight:600;">${p.title}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="deletePosition(${p.id})" style="color:var(--danger);">🗑️</button>
+        </div>
+      `).join('');
+    } catch (err) { container.innerHTML = `<p style="color:var(--danger);">${err.message}</p>`; }
+  }
+
+  async function addPosition(e) {
+    e.preventDefault();
+    const title = document.getElementById('position-title').value.trim();
+    if (!title) return;
+    try {
+      await apiPost('/admin/positions', { election_id: activePositionElectionId, title });
+      document.getElementById('position-title').value = '';
+      await loadPositions();
+      showToast('Position added', 'success');
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function deletePosition(id) {
+    showConfirm('Delete this position? All candidates for it will also be removed.', async () => {
+      try {
+        await apiDelete(`/admin/positions/${id}`);
+        await loadPositions();
+        showToast('Position deleted', 'info');
+      } catch (err) { showToast(err.message, 'error'); }
+    });
+  }
+
+  init();
+</script>
+</body>
+</html>

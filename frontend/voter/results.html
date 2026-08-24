@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Election Results — Lourdes College E-Voting</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    body { background: var(--gradient-main); min-height: 100vh; }
+    .voter-header {
+      background: rgba(6,12,26,0.9); border-bottom: 1px solid var(--border);
+      padding: 0 2rem; height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 50;
+    }
+    .header-brand { display: flex; align-items: center; gap: 0.75rem; }
+    .brand-icon { width:36px;height:36px;background:var(--gradient-accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.125rem; }
+    .brand-text strong { font-size:0.9375rem;font-weight:700; }
+    .brand-text span { font-size:0.75rem;color:var(--text-muted);display:block; }
+
+    .results-main { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    .turnout-card {
+      background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08));
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;
+    }
+    .turnout-circle {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent) 0%, rgba(255,255,255,0.05) 0%);
+      display: flex; align-items: center; justify-content: center;
+      position: relative; flex-shrink: 0;
+    }
+    .turnout-inner {
+      width: 76px; height: 76px;
+      border-radius: 50%;
+      background: #0f172a;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .turnout-pct { font-size: 1.25rem; font-weight: 800; color: var(--accent); }
+    .turnout-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .turnout-stats { flex: 1; }
+    .turnout-stats h2 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+    .turnout-stat-row { display: flex; gap: 2rem; margin-top: 0.75rem; flex-wrap: wrap; }
+    .turnout-stat strong { font-size: 1.5rem; font-weight: 800; display: block; }
+    .turnout-stat span { font-size: 0.8125rem; color: var(--text-secondary); }
+
+    .position-result-card {
+      background: var(--gradient-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .position-result-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .position-result-body { padding: 1.5rem; }
+
+    .winner-badge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      background: var(--gold-soft); color: var(--gold);
+      border: 1px solid rgba(245,158,11,0.3);
+      padding: 0.25rem 0.625rem; border-radius: 100px;
+      font-size: 0.75rem; font-weight: 700;
+      margin-left: auto;
+    }
+
+    .result-candidate-row {
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .result-candidate-row:last-child { margin-bottom: 0; }
+    .result-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      object-fit: cover; flex-shrink: 0;
+      border: 2px solid var(--border);
+    }
+    .result-avatar-placeholder {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--gradient-accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.875rem; font-weight: 700; color: white;
+      flex-shrink: 0;
+    }
+    .result-info { flex: 1; min-width: 0; }
+    .result-name { font-size: 0.9375rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .result-party { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.4rem; }
+    .result-bar-row { display: flex; align-items: center; gap: 0.75rem; }
+
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      background: var(--success-soft); color: var(--success);
+      border-radius: 100px; padding: 0.25rem 0.625rem;
+      font-size: 0.75rem; font-weight: 600;
+    }
+    .live-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--success);
+      animation: pulseDot 1.5s ease-in-out infinite;
+    }
+    @keyframes pulseDot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .chart-wrap { height: 220px; margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+
+  <header class="voter-header">
+    <div class="header-brand">
+      <div class="brand-icon">🗳️</div>
+      <div class="brand-text">
+        <strong>Lourdes College</strong>
+        <span>E-Voting System</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <div class="live-badge"><div class="live-dot"></div> Live Results</div>
+      <a href="/voter/dashboard.html" class="btn btn-outline btn-sm">← Back to Ballot</a>
+      <button class="btn btn-ghost btn-sm" id="logout-btn">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="results-main" id="main-content">
+    <div style="text-align:center;padding:3rem;color:var(--text-muted);">Loading results…</div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    let electionId = null;
+    const charts = {};
+
+    async function init() {
+      const user = await requireAuth('/');
+      if (!user) return;
+      document.getElementById('logout-btn').addEventListener('click', logout);
+
+      // Get active or most recent election
+      try {
+        const data = await apiGet('/vote/active');
+        if (data.election) {
+          electionId = data.election.id;
+        } else {
+          // Try getting most recent ended election
+          const elections = await apiGet('/results');
+          const ended = elections.filter(e => e.status === 'ended');
+          if (ended.length > 0) electionId = ended[0].id;
+        }
+
+        if (electionId) {
+          await renderResults();
+          setupSocket();
+        } else {
+          document.getElementById('main-content').innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📊</div>
+              <h3>No Results Available</h3>
+              <p>Results will be shown here once an election is active or has ended.</p>
+            </div>
+          `;
+        }
+      } catch (err) {
+        document.getElementById('main-content').innerHTML = `<div style="text-align:center;padding:3rem;color:var(--danger);">Error: ${err.message}</div>`;
+      }
+    }
+
+    async function renderResults() {
+      try {
+        const data = await apiGet(`/results/${electionId}`);
+        const { election, positions, totalUniqueVoters, totalEligibleVoters, turnout } = data;
+
+        // Destroy old charts
+        Object.values(charts).forEach(c => c.destroy());
+
+        const isActive = election.status === 'active';
+
+        let html = `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+            <div>
+              <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.35rem;">
+                ${isActive ? `<div class="live-badge"><div class="live-dot"></div> Live</div>` : `<span class="badge badge-ended">Ended</span>`}
+                <span class="badge badge-accent">${positions.length} Positions</span>
+              </div>
+              <h1 style="font-size:1.5rem;">${election.title}</h1>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="renderResults()">🔄 Refresh</button>
+          </div>
+
+          <div class="turnout-card">
+            <div class="turnout-circle" id="turnout-circle" style="background: conic-gradient(var(--accent) ${turnout * 3.6}deg, rgba(255,255,255,0.05) 0deg);">
+              <div class="turnout-inner">
+                <span class="turnout-pct">${turnout}%</span>
+                <span class="turnout-label">Turnout</span>
+              </div>
+            </div>
+            <div class="turnout-stats">
+              <h2>Voter Turnout</h2>
+              <div class="turnout-stat-row">
+                <div class="turnout-stat">
+                  <strong style="color:var(--accent);">${totalUniqueVoters}</strong>
+                  <span>Votes Cast</span>
+                </div>
+                <div class="turnout-stat">
+                  <strong style="color:var(--text-secondary);">${totalEligibleVoters}</strong>
+                  <span>Eligible Voters</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        positions.forEach((pos, idx) => {
+          const winner = pos.candidates[0];
+          html += `
+            <div class="position-result-card">
+              <div class="position-result-header">
+                <div class="position-number">${idx + 1}</div>
+                <div>
+                  <div class="position-title">${pos.title}</div>
+                  <div class="position-subtitle" style="font-size:0.8125rem;color:var(--text-muted);">${pos.totalVotes} vote${pos.totalVotes !== 1 ? 's' : ''} cast</div>
+                </div>
+                ${winner && pos.totalVotes > 0 ? `<span class="winner-badge">🏆 ${winner.name}</span>` : ''}
+              </div>
+              <div class="position-result-body">
+                ${pos.candidates.map((c, ci) => `
+                  <div class="result-candidate-row">
+                    ${c.photo_url
+                      ? `<img src="${c.photo_url}" class="result-avatar" alt="${c.name}">`
+                      : `<div class="result-avatar-placeholder">${getInitials(c.name)}</div>`
+                    }
+                    <div class="result-info">
+                      <div class="result-name">${c.name} ${ci === 0 && pos.totalVotes > 0 ? '🏆' : ''}</div>
+                      ${c.party ? `<div class="result-party">${c.party}</div>` : ''}
+                      <div class="result-bar-row">
+                        <div class="result-bar-track" style="flex:1;">
+                          <div class="result-bar-fill ${ci === 0 ? 'winner' : ''}" style="width:${c.percentage}%"></div>
+                        </div>
+                        <span class="result-pct">${c.percentage}%</span>
+                        <span style="font-size:0.8125rem;color:var(--text-secondary);min-width:60px;">${c.votes} vote${c.votes !== 1 ? 's' : ''}</span>
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
+                ${pos.candidates.length > 1 ? `<div class="chart-wrap"><canvas id="chart-${pos.id}"></canvas></div>` : ''}
+              </div>
+            </div>
+          `;
+        });
+
+        document.getElementById('main-content').innerHTML = html;
+
+        // Render charts
+        positions.forEach(pos => {
+          if (pos.candidates.length < 2) return;
+          const ctx = document.getElementById(`chart-${pos.id}`);
+          if (!ctx) return;
+
+          charts[pos.id] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: pos.candidates.map(c => c.name),
+              datasets: [{
+                data: pos.candidates.map(c => c.votes),
+                backgroundColor: pos.candidates.map((_, i) =>
+                  i === 0 ? 'rgba(245,158,11,0.8)' : 'rgba(99,102,241,0.6)'
+                ),
+                borderColor: pos.candidates.map((_, i) =>
+                  i === 0 ? '#f59e0b' : '#6366f1'
+                ),
+                borderWidth: 2, borderRadius: 6,
+              }]
+            },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 11 } } },
+                y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 11 }, stepSize: 1 }, beginAtZero: true }
+              }
+            }
+          });
+        });
+
+      } catch (err) {
+        document.getElementById('main-content').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🔒</div>
+            <h3>Results Not Available Yet</h3>
+            <p>${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function setupSocket() {
+      const socket = io();
+      socket.on('results-update', (data) => {
+        if (data.electionId === electionId) {
+          renderResults();
+        }
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
